@@ -2,7 +2,7 @@
 import sys
 import warnings
 
-from genai_masterclass.crew import GenaiMasterclass
+from genai_masterclass.crew import MasterclassCrew
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -18,7 +18,7 @@ def run():
     inputs = {
         'topic': 'AI LLMs'
     }
-    GenaiMasterclass().crew().kickoff(inputs=inputs)
+    MasterclassCrew().crew().kickoff(inputs=inputs)
 
 
 def train():
@@ -29,7 +29,7 @@ def train():
         "topic": "AI LLMs"
     }
     try:
-        GenaiMasterclass().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
+        MasterclassCrew().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
 
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
@@ -39,7 +39,7 @@ def replay():
     Replay the crew execution from a specific task.
     """
     try:
-        GenaiMasterclass().crew().replay(task_id=sys.argv[1])
+        MasterclassCrew().crew().replay(task_id=sys.argv[1])
 
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
@@ -52,7 +52,7 @@ def test():
         "topic": "AI LLMs"
     }
     try:
-        GenaiMasterclass().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
+        MasterclassCrew().crew().test(n_iterations=int(sys.argv[1]), openai_model_name=sys.argv[2], inputs=inputs)
 
     except Exception as e:
         raise Exception(f"An error occurred while replaying the crew: {e}")
