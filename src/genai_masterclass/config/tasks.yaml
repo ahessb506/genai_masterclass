@@ -1,29 +1,75 @@
 design_lesson_plan:
-  description: "Design and structure the masterclass lesson plan, including key talking points."
-  expected_output: "A comprehensive professor’s guideline in Markdown format."
-  agent: content_architect
+  description: "Design and structure the masterclass lesson plan for a 3 hour session, including key talking points."
+  expected_output: "A comprehensive professors guideline in Markdown format."
+  output_file: "outputs/lesson_plan.md"
+  agent: content_developer
 
 create_slide_content:
   description: "Develop structured content for each slide of the masterclass in Markdown format."
   expected_output: "Markdown files representing the content for each slide."
-  agent: content_architect
+  output_file: "outputs/slides/slide_content.md"
+  agent: content_developer
 
 draft_reminder_document:
   description: "Draft a concise 2-3 page document summarizing key tools and techniques taught in the masterclass."
   expected_output: "A well-written summary document in Markdown format."
-  agent: summary_writer
+  output_file: "outputs/summary_document.md"
+  agent: materials_creator
 
 develop_quizzes_activities:
   description: "Develop interactive quizzes and practical exercises to reinforce learning and engagement."
   expected_output: "Markdown documents containing quizzes and activities tailored to the masterclass content."
-  agent: quiz_activity_designer
+  output_file: "outputs/activities/quizzes_and_activities.md"
+  agent: exercise_designer
 
 review_materials:
   description: "Review all materials to ensure clarity, consistency, and alignment with masterclass objectives."
   expected_output: "Feedback and revisions incorporated into the Markdown documents."
+  output_file: "outputs/review/feedback_report.md"
   agent: feedback_agent
 
 coordinate_project:
   description: "Oversee the project, manage timelines, and ensure seamless collaboration among all agents."
   expected_output: "A well-coordinated project with all deliverables completed on time."
-  agent: coordinator
+  output_file: "outputs/project/project_status.md"
+  agent: project_manager
+
+develop_course_outline:
+  description: "Create detailed course outline with timing for each section based on the provided agenda"
+  expected_output: "Comprehensive course outline in Markdown format with detailed timings"
+  output_file: "outputs/course_outline.md"
+  agent: content_developer
+
+create_fundamental_content:
+  description: "Develop content for AI fundamentals, LLMs, and prompt engineering sections"
+  expected_output: "Markdown files containing slide content and speaker notes"
+  output_file: "outputs/content/fundamentals.md"
+  agent: content_developer
+
+design_practical_exercises:
+  description: "Create hands-on exercises for prompt engineering and AI tool usage"
+  expected_output: "Step-by-step exercise guides with example prompts and expected outputs"
+  output_file: "outputs/exercises/practical_exercises.md"
+  agent: exercise_designer
+
+develop_interactive_activities:
+  description: "Design group activities including icebreakers and AI recognition exercises"
+  expected_output: "Activity instructions and facilitation guides in Markdown format"
+  output_file: "outputs/activities/interactive_activities.md"
+  agent: exercise_designer
+
+create_supporting_materials:
+  description: "Develop content that is designed to be used on powerpoint slides by the teacher"
+  expected_output: "Content to be used in presentation slides in Markdown format"
+  output_file: "outputs/materials/presentation_content.md"
+  agent: materials_creator
+
+design_assessment_tools:
+  description: "Create pre/post quizzes and feedback surveys"
+  expected_output: "Quiz questions, answer keys, and feedback forms in Markdown format"
+  agent: engagement_specialist
+
+manage_project_delivery:
+  description: "Coordinate development timeline"
+  expected_output: "Ensure all deliverables are completed and content is set for the masterclass"
+  agent: project_manager

@@ -3,54 +3,62 @@ from crewai.project import CrewBase, agent, task, crew
 
 @CrewBase
 class MasterclassCrew:
-    """Crew for developing a 3-hour GenAI masterclass"""
+    """Crew for developing a one-day GenAI masterclass for non-technical audiences"""
 
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
 
     @agent
-    def content_architect(self) -> Agent:
-        return Agent(config=self.agents_config['content_architect'], verbose=True)
+    def content_developer(self) -> Agent:
+        return Agent(config=self.agents_config['content_developer'], verbose=True)
 
     @agent
-    def summary_writer(self) -> Agent:
-        return Agent(config=self.agents_config['summary_writer'], verbose=True)
+    def exercise_designer(self) -> Agent:
+        return Agent(config=self.agents_config['exercise_designer'], verbose=True)
 
     @agent
-    def quiz_activity_designer(self) -> Agent:
-        return Agent(config=self.agents_config['quiz_activity_designer'], verbose=True)
+    def materials_creator(self) -> Agent:
+        return Agent(config=self.agents_config['materials_creator'], verbose=True)
+
+    @agent
+    def engagement_specialist(self) -> Agent:
+        return Agent(config=self.agents_config['engagement_specialist'], verbose=True)
+
+    @agent
+    def project_manager(self) -> Agent:
+        return Agent(config=self.agents_config['project_manager'], verbose=True)
 
     @agent
     def feedback_agent(self) -> Agent:
         return Agent(config=self.agents_config['feedback_agent'], verbose=True)
 
-    @agent
-    def coordinator(self) -> Agent:
-        return Agent(config=self.agents_config['coordinator'], verbose=True)
+    @task
+    def develop_course_outline(self) -> Task:
+        return Task(config=self.tasks_config['develop_course_outline'])
 
     @task
-    def design_lesson_plan(self) -> Task:
-        return Task(config=self.tasks_config['design_lesson_plan'])
+    def create_fundamental_content(self) -> Task:
+        return Task(config=self.tasks_config['create_fundamental_content'])
 
     @task
-    def create_slide_content(self) -> Task:
-        return Task(config=self.tasks_config['create_slide_content'])
+    def design_practical_exercises(self) -> Task:
+        return Task(config=self.tasks_config['design_practical_exercises'])
 
     @task
-    def draft_reminder_document(self) -> Task:
-        return Task(config=self.tasks_config['draft_reminder_document'])
+    def develop_interactive_activities(self) -> Task:
+        return Task(config=self.tasks_config['develop_interactive_activities'])
 
     @task
-    def develop_quizzes_activities(self) -> Task:
-        return Task(config=self.tasks_config['develop_quizzes_activities'])
+    def create_supporting_materials(self) -> Task:
+        return Task(config=self.tasks_config['create_supporting_materials'])
 
     @task
-    def review_materials(self) -> Task:
-        return Task(config=self.tasks_config['review_materials'])
+    def design_assessment_tools(self) -> Task:
+        return Task(config=self.tasks_config['design_assessment_tools'])
 
     @task
-    def coordinate_project(self) -> Task:
-        return Task(config=self.tasks_config['coordinate_project'])
+    def manage_project_delivery(self) -> Task:
+        return Task(config=self.tasks_config['manage_project_delivery'])
 
     @crew
     def crew(self) -> Crew:
