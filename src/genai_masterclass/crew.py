@@ -109,7 +109,50 @@ class MasterclassCrew:
             self._save_output('outline_review.md', outline_review)
             print("✓ Outline review completed")
 
-            # Step 3: Create Final Outline
+            # Human Approval Step
+            print("\nPlease review the initial outline and feedback:")
+            print("\n=== Initial Outline ===")
+            print(initial_outline)
+            print("\n=== Review Feedback ===")
+            print(outline_review)
+            
+            while True:
+                approval = input("\nDo you approve this outline? (yes/no): ").lower()
+                if approval == 'yes':
+                    print("\nOutline approved! Proceeding with final version...")
+                    break
+                elif approval == 'no':
+                    feedback = input("\nPlease provide your feedback: ")
+                    print("\nIncorporating human feedback...")
+                    
+                    # Create task to revise outline with human feedback
+                    revision_task = Task(
+                        description=self.tasks['revise_outline_with_human_feedback']['description'].format(
+                            feedback=feedback
+                        ),
+                        expected_output=self.tasks['revise_outline_with_human_feedback']['expected_output'],
+                        agent=self.content_developer()
+                    )
+                    
+                    revision_crew = Crew(
+                        agents=[self.content_developer()],
+                        tasks=[revision_task],
+                        process=Process.sequential,
+                        verbose=True
+                    )
+                    
+                    revision_result = revision_crew.kickoff()
+                    initial_outline = self._get_result_content(revision_result)
+                    self._save_output('revised_outline.md', initial_outline)
+                    print("✓ Outline revised with human feedback")
+                    
+                    # Show revised outline for approval
+                    print("\n=== Revised Outline ===")
+                    print(initial_outline)
+                else:
+                    print("Please enter 'yes' or 'no'")
+
+            # Step 3: Create Final Outline (after approval)
             print("\nCreating final outline...")
             final_outline_task = Task(
                 description=self.tasks['create_final_outline']['description'].format(
