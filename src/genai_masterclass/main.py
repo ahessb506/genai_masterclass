@@ -2,6 +2,11 @@
 import sys
 import warnings
 import opentelemetry.trace
+from pathlib import Path
+
+# Suppress the TracerProvider warning globally
+warnings.filterwarnings("ignore", category=RuntimeWarning, 
+                      message="Overriding of current TracerProvider is not allowed")
 
 from genai_masterclass.crew import MasterclassCrew
 
@@ -14,19 +19,39 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
 def run():
     """Run the masterclass crew."""
-    # Suppress the tracer provider warning
-    warnings.filterwarnings("ignore", category=RuntimeWarning, 
-                          message="Overriding of current TracerProvider is not allowed")
-    
     try:
-        print("Starting GenAI Masterclass material creation...")
-        crew = MasterclassCrew()
-        result = crew.get_crew().kickoff()
-        print("\nMasterclass materials have been created successfully!")
-        return 0
-    except KeyboardInterrupt:
-        print("\nProcess interrupted by user.")
-        return 1
+        # Ensure warning is suppressed in this context
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, 
+                                  message="Overriding of current TracerProvider is not allowed")
+            
+            print("Starting GenAI Masterclass creation process...")
+            
+            crew = MasterclassCrew()
+            print(f"Output directory: {crew.output_path}")
+            
+            result = crew.get_crew().kickoff()
+            
+            # Verify outputs were created
+            output_files = [
+                'professor_guide.md',
+                'presentation_slides.md',
+                'student_handout.md'
+            ]
+            
+            print("\nChecking output files:")
+            for filename in output_files:
+                file_path = crew.output_path / filename
+                if file_path.exists():
+                    print(f"✓ {filename} was created successfully")
+                    # Optional: print file size
+                    print(f"  Size: {file_path.stat().st_size} bytes")
+                else:
+                    print(f"✗ {filename} was not created")
+            
+            print("\nProcess completed!")
+            return 0
+            
     except Exception as e:
         print(f"\nAn error occurred while running the crew: {str(e)}")
         return 1
@@ -75,4 +100,4 @@ def test():
         raise Exception(f"An error occurred while testing the crew: {e}")
 
 if __name__ == "__main__":
-    run()
+    sys.exit(run())

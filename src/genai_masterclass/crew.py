@@ -1,7 +1,13 @@
 from pathlib import Path
 import yaml
+import os
+import warnings
 from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, task
+
+# Suppress the TracerProvider warning globally
+warnings.filterwarnings("ignore", category=RuntimeWarning, 
+                      message="Overriding of current TracerProvider is not allowed")
 
 @CrewBase
 class MasterclassCrew:
@@ -12,7 +18,14 @@ class MasterclassCrew:
     masterclass_config = 'config/masterclass_concept.yaml'
 
     def __init__(self):
+        # Ensure warning is suppressed
+        warnings.filterwarnings("ignore", category=RuntimeWarning, 
+                              message="Overriding of current TracerProvider is not allowed")
+        
         self.base_path = Path(__file__).parent
+        self.output_path = self.base_path / 'outputs'
+        # Create output directory if it doesn't exist
+        self.output_path.mkdir(parents=True, exist_ok=True)
         super().__init__()
         self._load_masterclass_concept()
 
@@ -63,13 +76,45 @@ class MasterclassCrew:
 
     def _save_output(self, filename: str, content: str):
         """Save content to a file in the outputs directory."""
-        output_path = self.base_path / 'outputs'
-        output_path.mkdir(parents=True, exist_ok=True)
-        
-        file_path = output_path / filename
-        with open(file_path, 'w') as f:
-            f.write(content)
-        print(f"Saved output to: {file_path}")
+        try:
+            file_path = self.output_path / filename
+            print(f"Attempting to save to: {file_path}")
+            
+            # Ensure content is a string
+            content_str = str(content)
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content_str)
+            
+            print(f"Successfully saved output to: {file_path}")
+            
+            # Verify file was created
+            if file_path.exists():
+                print(f"Verified file exists: {file_path}")
+            else:
+                print(f"Warning: File was not created: {file_path}")
+                
+        except Exception as e:
+            print(f"Error saving output to {filename}: {str(e)}")
+
+    def _get_task_output(self, result, task_index):
+        """Safely extract output from CrewOutput object."""
+        try:
+            if hasattr(result, 'outputs'):
+                output = result.outputs[task_index]
+            elif hasattr(result, 'values'):
+                output = list(result.values())[task_index]
+            elif isinstance(result, (list, tuple)):
+                output = result[task_index]
+            else:
+                output = str(result)
+            
+            print(f"Successfully extracted output for task {task_index}")
+            return output
+            
+        except Exception as e:
+            print(f"Error accessing task {task_index} output: {e}")
+            return str(result)
 
     def get_crew(self) -> Crew:
         """Create and return the crew with iterative outline review."""
@@ -155,81 +200,74 @@ class MasterclassCrew:
         print("\nOutline approved. Creating final materials...")
         self.approved_outline = current_outline
         
-        # Create final materials with specific instructions
+        # Create final materials with clearer task descriptions
         final_tasks = [
             Task(
-                description=f"""Create a comprehensive professor's guide based on this approved outline:
+                description="""You are tasked with creating a comprehensive professor's guide for a masterclass. 
+                
+Here is the approved course outline:
 
-{self.approved_outline}
+{}
 
-Your task is to create a detailed teaching guide that includes:
+Based on this outline, create a detailed teaching guide document that must include:
 1. Detailed explanations for each section of the course
 2. Step-by-step teaching instructions with timing
 3. Specific activities and exercises with implementation guidelines
 4. Anticipated student questions and prepared answers
 5. Tips for maintaining engagement and handling discussions
 6. Additional resources and references for each topic
-7. Assessment criteria and grading guidelines""",
+7. Assessment criteria and grading guidelines
+
+Format your response as a complete teaching guide document with clear sections and headings.""".format(self.approved_outline),
                 expected_output="A comprehensive professor's guide in Markdown format",
                 agent=self.content_developer()
             ),
             Task(
-                description=f"""Create presentation slides based on this approved outline:
+                description="""You are tasked with creating presentation slides for a masterclass. 
 
-{self.approved_outline}
+Here is the approved course outline:
 
-Your task is to create engaging presentation content that:
-1. Follows the outline's progression logically
-2. Uses clear, non-technical language appropriate for the audience
-3. Includes specific points for visual elements and graphics
-4. Highlights key concepts with examples and analogies
-5. Incorporates interactive elements and discussion points
-6. Provides clear transitions between topics
-7. Includes speaker notes with delivery suggestions""",
+{}
+
+Based on this outline, create a complete slide deck content that must include:
+1. Title slide and introduction
+2. Clear slides for each section of the outline
+3. Key points and concepts for each topic
+4. Examples and analogies to explain complex ideas
+5. Interactive elements and discussion prompts
+6. Visual element descriptions and placement suggestions
+7. Speaker notes for each slide
+
+Format your response as a slide-by-slide presentation with clear slide numbers, content, and speaker notes.""".format(self.approved_outline),
                 expected_output="Slide-by-slide content in Markdown format",
                 agent=self.materials_creator()
             ),
             Task(
-                description=f"""Create a student handout based on this approved outline:
+                description="""You are tasked with creating a student handout for a masterclass. 
 
-{self.approved_outline}
+Here is the approved course outline:
 
-Your task is to create a concise reference guide that:
-1. Summarizes key concepts and definitions
-2. Provides practical tips and best practices
-3. Lists common pitfalls and how to avoid them
-4. Includes hands-on exercises and practice problems
-5. Offers resources for further learning
-6. Contains a glossary of important terms
-7. Includes space for notes and reflections""",
+{}
+
+Based on this outline, create a comprehensive student reference guide that must include:
+1. Executive summary of the course
+2. Key concepts and definitions for each section
+3. Practical tips and best practices
+4. Common pitfalls and how to avoid them
+5. Hands-on exercises and practice problems
+6. Resources for further learning
+7. Glossary of important terms
+8. Note-taking sections
+
+Format your response as a complete student guide with clear sections, headings, and space for notes.""".format(self.approved_outline),
                 expected_output="A concise student handout in Markdown format",
                 agent=self.materials_creator()
-            ),
-            Task(
-                description=f"""Review all the created materials in the context of this approved outline:
-
-{self.approved_outline}
-
-Your task is to perform a comprehensive review ensuring:
-1. Perfect alignment with the approved outline
-2. Consistency in terminology and concepts across all materials
-3. Appropriate difficulty level for the target audience
-4. Logical progression of concepts and learning objectives
-5. Effectiveness of exercises and activities
-6. Clarity and completeness of explanations
-7. Proper coverage of all topics
-8. Engagement level of materials
-
-Provide specific feedback for improvements if needed.""",
-                expected_output="Detailed review report with specific recommendations",
-                agent=self.feedback_agent()
             )
         ]
 
         final_crew = Crew(
             agents=[
                 self.content_developer(),
-                self.feedback_agent(),
                 self.materials_creator()
             ],
             tasks=final_tasks,
@@ -238,13 +276,23 @@ Provide specific feedback for improvements if needed.""",
         )
 
         # Execute final tasks and save outputs
+        print("\nExecuting final tasks...")
         final_results = final_crew.kickoff()
-        try:
-            self._save_output('professor_guide.md', final_results[0])
-            self._save_output('presentation_slides.md', final_results[1])
-            self._save_output('student_handout.md', final_results[2])
-            self._save_output('final_review.md', final_results[3])
-        except Exception as e:
-            print(f"Note: Error saving final results: {e}")
+        
+        print("\nSaving final outputs...")
+        output_files = [
+            ('professor_guide.md', 0),
+            ('presentation_slides.md', 1),
+            ('student_handout.md', 2)
+        ]
+        
+        for filename, index in output_files:
+            print(f"\nProcessing {filename}...")
+            content = self._get_task_output(final_results, index)
+            if content:
+                print(f"Content extracted for {filename}, saving...")
+                self._save_output(filename, content)
+            else:
+                print(f"No content extracted for {filename}")
 
         return final_crew
