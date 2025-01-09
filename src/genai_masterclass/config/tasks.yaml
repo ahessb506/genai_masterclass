@@ -15,7 +15,7 @@ review_initial_outline:
   description: "Review this initial course outline: {initial_outline}
 
     Provide detailed feedback on:
-    - Alignment with masterclass objectives
+    - Alignment with masterclass objectives and audience
     - Content progression and flow
     - Time allocation appropriateness
     - Coverage of key topics
@@ -50,11 +50,12 @@ create_professor_guide:
 create_presentation_slides:
   description: "Based on the approved course outline: {final_outline}
 
-    Create presentation slides that:
+    Create the content for thepresentation slides that:
     - Follow the established progression of topics
     - Use concise, non-technical language
-    - Include visual elements and interaction points
-    - Highlight key concepts and examples"
+    - Output should be Title per slide and content per slide
+    - Highlight key concepts and examples
+    "
   expected_output: "Slide-by-slide content in Markdown format"
   output_file: "outputs/slides/presentation_content.md"
   agent: materials_creator

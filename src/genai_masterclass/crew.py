@@ -61,6 +61,16 @@ class MasterclassCrew:
             context=[self.create_initial_outline()]
         )
 
+    def _save_output(self, filename: str, content: str):
+        """Save content to a file in the outputs directory."""
+        output_path = self.base_path / 'outputs'
+        output_path.mkdir(parents=True, exist_ok=True)
+        
+        file_path = output_path / filename
+        with open(file_path, 'w') as f:
+            f.write(content)
+        print(f"Saved output to: {file_path}")
+
     def get_crew(self) -> Crew:
         """Create and return the crew with iterative outline review."""
         # Step 1: Create initial outline and get AI review
@@ -82,6 +92,10 @@ class MasterclassCrew:
             initial_outline = initial_results[0]
             ai_feedback = initial_results[1]
             
+            # Save initial outputs
+            self._save_output('initial_outline.md', initial_outline)
+            self._save_output('ai_feedback.md', ai_feedback)
+            
             print("\nInitial AI Feedback received. Incorporating feedback...")
             
             # Step 2: Have content developer incorporate AI feedback
@@ -100,23 +114,28 @@ class MasterclassCrew:
             
             revision_result = revision_crew.kickoff()
             current_outline = revision_result[0]
+            self._save_output('revised_outline.md', current_outline)
             
         except Exception as e:
             print(f"Note: Error accessing results: {e}")
             current_outline = str(initial_results)
         
         # Step 3: Begin human feedback loop
+        iteration = 1
         while True:
-            print("\nCurrent outline after incorporating AI feedback:")
+            print("\nCurrent outline after incorporating feedback:")
             print(current_outline)
             
             user_input = input("\nType 'approved' to continue with the current outline, or provide additional feedback for revision: ")
             
             if user_input.lower() == 'approved':
+                self._save_output('final_outline.md', current_outline)
                 break
             
+            # Save human feedback
+            self._save_output(f'human_feedback_{iteration}.md', user_input)
+            
             print("\nRevising outline based on your feedback...")
-            # Create a new crew for human-feedback revision
             revision_crew = Crew(
                 agents=[self.content_developer()],
                 tasks=[self.revise_outline_with_human_feedback(user_input)],
@@ -127,13 +146,13 @@ class MasterclassCrew:
             revision_result = revision_crew.kickoff()
             try:
                 current_outline = revision_result[0]
+                self._save_output(f'revised_outline_{iteration}.md', current_outline)
+                iteration += 1
             except Exception as e:
                 print(f"Note: Error accessing revision result: {e}")
                 current_outline = str(revision_result)
 
         print("\nOutline approved. Creating final materials...")
-        
-        # Store the approved outline for use in final materials
         self.approved_outline = current_outline
         
         # Create final materials with specific instructions
@@ -207,7 +226,7 @@ Provide specific feedback for improvements if needed.""",
             )
         ]
 
-        return Crew(
+        final_crew = Crew(
             agents=[
                 self.content_developer(),
                 self.feedback_agent(),
@@ -217,3 +236,15 @@ Provide specific feedback for improvements if needed.""",
             process=Process.sequential,
             verbose=True
         )
+
+        # Execute final tasks and save outputs
+        final_results = final_crew.kickoff()
+        try:
+            self._save_output('professor_guide.md', final_results[0])
+            self._save_output('presentation_slides.md', final_results[1])
+            self._save_output('student_handout.md', final_results[2])
+            self._save_output('final_review.md', final_results[3])
+        except Exception as e:
+            print(f"Note: Error saving final results: {e}")
+
+        return final_crew
