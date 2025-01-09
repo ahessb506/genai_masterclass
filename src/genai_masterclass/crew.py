@@ -3,12 +3,7 @@ import yaml
 import os
 import warnings
 from crewai import Agent, Task, Crew, Process
-from crewai.project import CrewBase, agent, task
 
-# Disable OpenTelemetry tracing
-os.environ["OTEL_PYTHON_DISABLED"] = "true"
-
-@CrewBase
 class MasterclassCrew:
     """Crew for developing a GenAI masterclass for non-technical audiences"""
 
@@ -17,228 +12,137 @@ class MasterclassCrew:
     masterclass_config = 'config/masterclass_concept.yaml'
 
     def __init__(self):
-        # Ensure warning is suppressed
         warnings.filterwarnings("ignore", category=RuntimeWarning, 
                               message="Overriding of current TracerProvider is not allowed")
         
         self.base_path = Path(__file__).parent
         self.output_path = self.base_path / 'outputs'
-        # Create output directory if it doesn't exist
         self.output_path.mkdir(parents=True, exist_ok=True)
-        super().__init__()
+        
         self._load_masterclass_concept()
+        self._load_tasks_config()
+        self._load_agents_config()
 
     def _load_masterclass_concept(self):
-        """Load masterclass concept from config file."""
         config_path = self.base_path / self.masterclass_config
         with open(config_path, 'r') as f:
             self.masterclass_concept = yaml.safe_load(f)
 
-    @agent
+    def _load_tasks_config(self):
+        config_path = self.base_path / self.tasks_config
+        with open(config_path, 'r') as f:
+            self.tasks = yaml.safe_load(f)
+            print(f"Loaded tasks: {list(self.tasks.keys())}")
+
+    def _load_agents_config(self):
+        config_path = self.base_path / self.agents_config
+        with open(config_path, 'r') as f:
+            self.agents = yaml.safe_load(f)
+
     def content_developer(self) -> Agent:
-        return Agent(config=self.agents_config['content_developer'], verbose=True)
-
-    @agent
-    def feedback_agent(self) -> Agent:
-        return Agent(config=self.agents_config['feedback_agent'], verbose=True)
-
-    @agent
-    def materials_creator(self) -> Agent:
-        return Agent(config=self.agents_config['materials_creator'], verbose=True)
-
-    @task
-    def create_initial_outline(self) -> Task:
-        return Task(
-            description=f"Based on this masterclass concept:\n\n{yaml.dump(self.masterclass_concept, sort_keys=False)}\n\nCreate a detailed course outline that includes:\n- Clear learning objectives\n- Topic breakdown\n- Time allocation\n- Key points\n- Activities",
-            expected_output="A detailed course outline in Markdown format",
-            agent=self.content_developer()
-        )
-
-    @task
-    def review_initial_outline(self) -> Task:
-        return Task(
-            description="Review the initial course outline and provide feedback",
-            expected_output="Detailed review and suggestions in Markdown format",
-            agent=self.feedback_agent(),
-            context=[self.create_initial_outline()]
-        )
-
-    @task
-    def revise_outline_with_human_feedback(self, feedback: str) -> Task:
-        """Create a task for revising the outline based on human feedback only."""
-        return Task(
-            description=f"Revise the outline based on this human feedback:\n\n{feedback}\n\nMake sure to address all the points raised in the feedback.",
-            expected_output="Revised course outline in Markdown format",
-            agent=self.content_developer(),
-            context=[self.create_initial_outline()]
-        )
-
-    def _save_output(self, filename: str, content: str):
-        """Save content to a file in the outputs directory."""
-        try:
-            file_path = self.output_path / filename
-            print(f"Attempting to save to: {file_path}")
-            
-            # Ensure content is a string
-            content_str = str(content)
-            
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(content_str)
-            
-            print(f"Successfully saved output to: {file_path}")
-            
-            # Verify file was created
-            if file_path.exists():
-                print(f"Verified file exists: {file_path}")
-            else:
-                print(f"Warning: File was not created: {file_path}")
-                
-        except Exception as e:
-            print(f"Error saving output to {filename}: {str(e)}")
-
-    def _get_task_output(self, result, task_index):
-        """Safely extract output from CrewOutput object."""
-        try:
-            if hasattr(result, 'outputs'):
-                output = result.outputs[task_index]
-            elif hasattr(result, 'values'):
-                output = list(result.values())[task_index]
-            elif isinstance(result, (list, tuple)):
-                output = result[task_index]
-            else:
-                output = str(result)
-            
-            print(f"Successfully extracted output for task {task_index}")
-            return output
-            
-        except Exception as e:
-            print(f"Error accessing task {task_index} output: {e}")
-            return str(result)
-
-    def _get_result_content(self, result):
-        """Safely extract content from CrewOutput."""
-        try:
-            # Try different methods to get the content
-            if hasattr(result, 'raw_output'):
-                return result.raw_output
-            elif hasattr(result, 'outputs'):
-                return result.outputs[0] if result.outputs else str(result)
-            elif isinstance(result, (list, tuple)):
-                return result[0]
-            else:
-                return str(result)
-        except Exception as e:
-            print(f"Warning: Error extracting content: {e}")
-            return str(result)
-
-    def get_crew(self) -> Crew:
-        """Create and return the crew with iterative outline review."""
-        # Step 1: Create initial outline and get AI review
-        initial_crew = Crew(
-            agents=[self.content_developer(), self.feedback_agent()],
-            tasks=[
-                self.create_initial_outline(),
-                self.review_initial_outline()
-            ],
-            process=Process.sequential,
+        return Agent(
+            role=self.agents['content_developer']['role'],
+            goal=self.agents['content_developer']['goal'],
+            backstory=self.agents['content_developer']['backstory'],
             verbose=True
         )
 
-        print("\nCreating initial outline and getting AI review...")
-        initial_results = initial_crew.kickoff()
-        
+    def feedback_agent(self) -> Agent:
+        return Agent(
+            role=self.agents['feedback_agent']['role'],
+            goal=self.agents['feedback_agent']['goal'],
+            backstory=self.agents['feedback_agent']['backstory'],
+            verbose=True
+        )
+
+    def materials_creator(self) -> Agent:
+        return Agent(
+            role=self.agents['materials_creator']['role'],
+            goal=self.agents['materials_creator']['goal'],
+            backstory=self.agents['materials_creator']['backstory'],
+            verbose=True
+        )
+
+    def get_crew(self) -> Crew:
         try:
-            # Access results directly from the list
-            initial_outline = initial_results[0]
-            ai_feedback = initial_results[1]
+            # Step 1: Create Initial Outline
+            print("\nCreating initial outline...")
+            initial_outline_task = Task(
+                description=self.tasks['create_initial_outline']['description'].format(
+                    masterclass_concept=self.masterclass_concept['concept']  # Make sure to access the correct key
+                ),
+                expected_output=self.tasks['create_initial_outline']['expected_output'],
+                agent=self.content_developer()
+            )
             
-            # Save initial outputs
+            initial_crew = Crew(
+                agents=[self.content_developer()],
+                tasks=[initial_outline_task],
+                process=Process.sequential,
+                verbose=True
+            )
+            
+            initial_result = initial_crew.kickoff()
+            initial_outline = self._get_result_content(initial_result)
             self._save_output('initial_outline.md', initial_outline)
-            self._save_output('ai_feedback.md', ai_feedback)
-            
-            print("\nInitial AI Feedback received. Incorporating feedback...")
-            
-            # Step 2: Have content developer incorporate AI feedback
-            revision_crew = Crew(
-                agents=[self.content_developer()],
-                tasks=[
-                    Task(
-                        description=f"Review and incorporate this AI feedback into the outline:\n\nOriginal Outline:\n{initial_outline}\n\nAI Feedback:\n{ai_feedback}",
-                        expected_output="Revised course outline in Markdown format",
-                        agent=self.content_developer()
-                    )
-                ],
-                process=Process.sequential,
-                verbose=True
-            )
-            
-            revision_result = revision_crew.kickoff()
-            current_outline = revision_result[0]
-            self._save_output('revised_outline.md', current_outline)
-            
-        except Exception as e:
-            print(f"Note: Error accessing results: {e}")
-            current_outline = str(initial_results)
-        
-        # Step 3: Begin human feedback loop
-        iteration = 1
-        while True:
-            print("\nCurrent outline after incorporating feedback:")
-            print(current_outline)
-            
-            user_input = input("\nType 'approved' to continue with the current outline, or provide additional feedback for revision: ")
-            
-            if user_input.lower() == 'approved':
-                self._save_output('final_outline.md', current_outline)
-                break
-            
-            # Save human feedback
-            self._save_output(f'human_feedback_{iteration}.md', user_input)
-            
-            print("\nRevising outline based on your feedback...")
-            revision_crew = Crew(
-                agents=[self.content_developer()],
-                tasks=[self.revise_outline_with_human_feedback(user_input)],
-                process=Process.sequential,
-                verbose=True
-            )
-            
-            revision_result = revision_crew.kickoff()
-            try:
-                current_outline = revision_result[0]
-                self._save_output(f'revised_outline_{iteration}.md', current_outline)
-                iteration += 1
-            except Exception as e:
-                print(f"Note: Error accessing revision result: {e}")
-                current_outline = str(revision_result)
+            print("✓ Initial outline created")
 
-        print("\nOutline approved. Creating final materials...")
-        self.approved_outline = current_outline
-        
-        # Create and execute tasks sequentially with better error handling
-        results = {}
-        
-        try:
-            # Professor's Guide
+            # Step 2: Review Initial Outline
+            print("\nReviewing initial outline...")
+            review_task = Task(
+                description=self.tasks['review_initial_outline']['description'].format(
+                    initial_outline=initial_outline
+                ),
+                expected_output=self.tasks['review_initial_outline']['expected_output'],
+                agent=self.feedback_agent()
+            )
+            
+            review_crew = Crew(
+                agents=[self.feedback_agent()],
+                tasks=[review_task],
+                process=Process.sequential,
+                verbose=True
+            )
+            
+            review_result = review_crew.kickoff()
+            outline_review = self._get_result_content(review_result)
+            self._save_output('outline_review.md', outline_review)
+            print("✓ Outline review completed")
+
+            # Step 3: Create Final Outline
+            print("\nCreating final outline...")
+            final_outline_task = Task(
+                description=self.tasks['create_final_outline']['description'].format(
+                    initial_outline=initial_outline,
+                    outline_review=outline_review,
+                    masterclass_concept=self.masterclass_concept['concept']
+                ),
+                expected_output=self.tasks['create_final_outline']['expected_output'],
+                agent=self.content_developer()
+            )
+            
+            final_crew = Crew(
+                agents=[self.content_developer()],
+                tasks=[final_outline_task],
+                process=Process.sequential,
+                verbose=True
+            )
+            
+            final_result = final_crew.kickoff()
+            self.approved_outline = self._get_result_content(final_result)
+            self._save_output('final_outline.md', self.approved_outline)
+            print("✓ Final outline created and approved")
+
+            # Now that we have the approved outline, create the professor's guide
             print("\nGenerating professor's guide...")
+            if not hasattr(self, 'approved_outline'):
+                raise ValueError("No approved outline available. Please ensure the outline is created first.")
+                
             guide_task = Task(
-                description=f"""You are creating a comprehensive professor's guide.
-
-APPROVED COURSE OUTLINE:
-{self.approved_outline}
-
-Your task is to create a detailed teaching guide document. You must include:
-1. Detailed explanations for each section of the course
-2. Step-by-step teaching instructions with timing
-3. Specific activities and exercises with implementation guidelines
-4. Anticipated student questions and prepared answers
-5. Tips for maintaining engagement and handling discussions
-6. Additional resources and references for each topic
-7. Assessment criteria and grading guidelines
-
-Thought: I will create a comprehensive professor's guide based on the approved outline.
-Final Answer: [Your complete professor's guide in markdown format]""",
-                expected_output="A comprehensive professor's guide in Markdown format",
+                description=self.tasks['create_professor_guide']['description'].format(
+                    approved_outline=self.approved_outline
+                ),
+                expected_output=self.tasks['create_professor_guide']['expected_output'],
                 agent=self.content_developer()
             )
             
@@ -254,100 +158,32 @@ Final Answer: [Your complete professor's guide in markdown format]""",
             self._save_output('professor_guide.md', guide_content)
             print("✓ Professor's guide created")
 
-            # Presentation Slides
-            print("\nGenerating presentation slides...")
-            slides_task = Task(
-                description=f"""You are creating presentation slides.
-
-APPROVED COURSE OUTLINE:
-{self.approved_outline}
-
-Your task is to create a complete slide deck. You must include:
-1. Title slide and introduction
-2. Clear slides for each section of the outline
-3. Key points and concepts for each topic
-4. Examples and analogies to explain complex ideas
-5. Interactive elements and discussion prompts
-6. Visual element descriptions
-7. Speaker notes for each slide
-
-Format each slide as:
-## Slide [number]: [title]
-Content: [content]
-Speaker Notes: [notes]
-
-Thought: I will create presentation slides based on the approved outline.
-Final Answer: [Your complete slide deck in markdown format]""",
-                expected_output="Slide-by-slide content in Markdown format",
-                agent=self.materials_creator()
-            )
-            
-            slides_crew = Crew(
-                agents=[self.materials_creator()],
-                tasks=[slides_task],
-                process=Process.sequential,
-                verbose=True
-            )
-            
-            slides_result = slides_crew.kickoff()
-            slides_content = self._get_result_content(slides_result)
-            self._save_output('presentation_slides.md', slides_content)
-            print("✓ Presentation slides created")
-
-            # Student Handout
-            print("\nGenerating student handout...")
-            handout_task = Task(
-                description=f"""You are creating a student handout.
-
-APPROVED COURSE OUTLINE:
-{self.approved_outline}
-
-Your task is to create a student-friendly reference guide. You must include:
-1. Executive summary of the course
-2. Key concepts and definitions for each section
-3. Practical tips and best practices
-4. Common pitfalls and how to avoid them
-5. Hands-on exercises and practice problems
-6. Resources for further learning
-7. Glossary of important terms
-8. Note-taking sections
-
-Thought: I will create a student handout based on the approved outline.
-Final Answer: [Your complete student handout in markdown format]""",
-                expected_output="A concise student handout in Markdown format",
-                agent=self.materials_creator()
-            )
-            
-            handout_crew = Crew(
-                agents=[self.materials_creator()],
-                tasks=[handout_task],
-                process=Process.sequential,
-                verbose=True
-            )
-            
-            handout_result = handout_crew.kickoff()
-            handout_content = self._get_result_content(handout_result)
-            self._save_output('student_handout.md', handout_content)
-            print("✓ Student handout created")
-
-            # Verify unique content
-            print("\nVerifying unique content in files...")
-            files = {
-                'professor_guide.md': guide_content,
-                'presentation_slides.md': slides_content,
-                'student_handout.md': handout_content
-            }
-
-            for file1, content1 in files.items():
-                for file2, content2 in files.items():
-                    if file1 < file2:
-                        if content1 == content2:
-                            print(f"Warning: {file1} and {file2} have identical content!")
-                        else:
-                            print(f"✓ {file1} and {file2} have unique content")
+            return guide_crew
 
         except Exception as e:
-            print(f"\nError during content generation: {str(e)}")
+            print(f"\nError during task execution: {str(e)}")
+            print(f"Tasks loaded: {list(self.tasks.keys())}")
+            import traceback
+            print(f"Traceback:\n{traceback.format_exc()}")
             raise
 
-        return guide_crew  # Return the first crew for compatibility
+    def _get_result_content(self, result):
+        """Helper method to extract content from crew results"""
+        try:
+            if hasattr(result, 'raw_output'):
+                return result.raw_output
+            elif hasattr(result, 'outputs'):
+                return result.outputs[0] if result.outputs else str(result)
+            elif isinstance(result, (list, tuple)):
+                return result[0]
+            else:
+                return str(result)
+        except Exception as e:
+            print(f"Warning: Error extracting content: {e}")
+            return str(result)
+
+    def _save_output(self, filename: str, content: str):
+        """Helper method to save output to file"""
+        output_path = self.output_path / filename
+        with open(output_path, 'w') as f:
+            f.write(content)

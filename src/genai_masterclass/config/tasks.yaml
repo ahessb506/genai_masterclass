@@ -35,41 +35,72 @@ create_final_outline:
   agent: content_developer
 
 create_professor_guide:
-  description: "Based on the approved course outline: {final_outline}
+  description: "You are creating a comprehensive professor's guide.
 
-    Create a comprehensive teaching guide that includes:
-    - Detailed explanations for each section
-    - Teaching instructions and timing
-    - Activities and guidelines
-    - Common questions and answers
-    - Tips for engagement"
+APPROVED COURSE OUTLINE:
+{approved_outline}
+
+Your task is to create a detailed teaching guide document. You must include:
+1. Detailed explanations for each section of the course
+2. Step-by-step teaching instructions with timing
+3. Specific activities and exercises with implementation guidelines
+4. Anticipated student questions and prepared answers
+5. Tips for maintaining engagement and handling discussions
+6. Additional resources and references for each topic
+7. Assessment criteria and grading guidelines
+
+Thought: I will create a comprehensive professor's guide based on the approved outline.
+Final Answer: [Your complete professor's guide in markdown format]"
   expected_output: "A comprehensive professor's guide in Markdown format"
-  output_file: "outputs/professor_guide.md"
   agent: content_developer
 
 create_presentation_slides:
   description: "Based on the approved course outline: {final_outline}
+    And using this professor's guide as reference: {professor_guide}
 
-    Create the content for thepresentation slides that:
-    - Follow the established progression of topics
-    - Use concise, non-technical language
-    - Output should be Title per slide and content per slide
-    - Highlight key concepts and examples
+    Create a complete slide deck that aligns with the professor's guide. You must include:
+    1. Title slide 
+    2. Content slides for each section, following the professor's guide structure. Vary between text and bullet points as seen fit.
+    3. Key points and concepts as detailed in the guide
+    4. Examples and analogies mentioned in the guide
+    5. Interactive elements that complement the guide's activities
+    6. Visual element descriptions in details so it can be reproduced by a designer.
+    7. Speaker notes that reference the guide's teaching instructions
+
+    Important: Use the professor's guide as your primary reference for content and structure, 
+    ensuring the slides support the teaching approach outlined in the guide.
+
+    Format each slide as:
+    ## Slide [number]
+    Title:[title]
+    Content: [content]
+    Speaker Notes: [notes from professor's guide]
+    Visual Elements: [visual elements description]
     "
   expected_output: "Slide-by-slide content in Markdown format"
-  output_file: "outputs/slides/presentation_content.md"
+  output_file: "outputs/presentation_slides.md"
   agent: materials_creator
+  context: [create_professor_guide]
 
 create_student_handout:
-  description: "Based on the approved course outline: {final_outline}
+  description: "You are creating a student handout.
 
-    Create a concise reference guide (2-3 pages) that includes:
-    - Key concepts and definitions
-    - Practical tips and best practices
-    - Common pitfalls to avoid
-    - Resources for further learning"
-  expected_output: "A concise summary document in Markdown format"
-  output_file: "outputs/student_handout.md"
+APPROVED COURSE OUTLINE:
+{approved_outline}
+
+Your task is to create a student-friendly reference guide. You must include:
+1. Executive summary of the course
+2. Key concepts and definitions for each section
+3. Practical tips and best practices
+4. Common pitfalls and how to avoid them
+5. Hands-on exercises and practice problems
+6. Resources for further learning
+7. Glossary of important terms
+8. Note-taking sections
+
+Thought: I will create a student handout based on the approved outline.
+Final Answer: [Your complete student handout in markdown format]"
+  expected_output: "A concise student handout in Markdown format"
   agent: materials_creator
 
 review_all_materials:
@@ -83,3 +114,22 @@ review_all_materials:
   expected_output: "Review report with suggested improvements"
   output_file: "outputs/review/review_report.md"
   agent: feedback_agent
+
+revise_outline_with_ai_feedback:
+  description: "Review and incorporate this AI feedback into the outline:
+
+Original Outline: {initial_outline}
+
+AI Feedback: {ai_feedback}"
+  expected_output: "Revised course outline in Markdown format"
+  agent: content_developer
+
+revise_outline_with_human_feedback:
+  description: "Revise the outline based on this human feedback:
+
+{feedback}
+
+Make sure to address all the points raised in the feedback."
+  expected_output: "Revised course outline in Markdown format"
+  agent: content_developer
+  context: [create_initial_outline]
