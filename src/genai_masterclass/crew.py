@@ -200,16 +200,16 @@ class MasterclassCrew:
         print("\nOutline approved. Creating final materials...")
         self.approved_outline = current_outline
         
-        # Create final materials with clearer task descriptions
+        # Create final materials with agent-specific format instructions
         final_tasks = [
             Task(
-                description="""You are tasked with creating a comprehensive professor's guide for a masterclass. 
-                
-Here is the approved course outline:
+                description="""Create a comprehensive professor's guide for this masterclass.
 
+APPROVED COURSE OUTLINE:
 {}
 
-Based on this outline, create a detailed teaching guide document that must include:
+REQUIRED CONTENT:
+Create a detailed teaching guide document that includes:
 1. Detailed explanations for each section of the course
 2. Step-by-step teaching instructions with timing
 3. Specific activities and exercises with implementation guidelines
@@ -218,38 +218,56 @@ Based on this outline, create a detailed teaching guide document that must inclu
 6. Additional resources and references for each topic
 7. Assessment criteria and grading guidelines
 
-Format your response as a complete teaching guide document with clear sections and headings.""".format(self.approved_outline),
+Please provide your response in this exact format:
+
+Thought: I will create a comprehensive professor's guide based on the approved outline.
+Final Answer: 
+
+# Professor's Guide for [Course Title]
+
+[Rest of the guide content following the requirements above]""".format(self.approved_outline),
                 expected_output="A comprehensive professor's guide in Markdown format",
                 agent=self.content_developer()
             ),
             Task(
-                description="""You are tasked with creating presentation slides for a masterclass. 
+                description="""Create presentation slides for this masterclass.
 
-Here is the approved course outline:
-
+APPROVED COURSE OUTLINE:
 {}
 
-Based on this outline, create a complete slide deck content that must include:
+REQUIRED CONTENT:
+Create a complete slide deck content that includes:
 1. Title slide and introduction
 2. Clear slides for each section of the outline
 3. Key points and concepts for each topic
 4. Examples and analogies to explain complex ideas
 5. Interactive elements and discussion prompts
-6. Visual element descriptions and placement suggestions
+6. Visual element descriptions
 7. Speaker notes for each slide
 
-Format your response as a slide-by-slide presentation with clear slide numbers, content, and speaker notes.""".format(self.approved_outline),
+Please provide your response in this exact format:
+
+Thought: I will create a complete slide deck based on the approved outline.
+Final Answer: 
+
+# Presentation Slides
+
+## Slide 1: Title
+Content: [Slide content]
+Speaker Notes: [Notes for presenter]
+
+[Continue with remaining slides]""".format(self.approved_outline),
                 expected_output="Slide-by-slide content in Markdown format",
                 agent=self.materials_creator()
             ),
             Task(
-                description="""You are tasked with creating a student handout for a masterclass. 
+                description="""Create a student handout for this masterclass.
 
-Here is the approved course outline:
-
+APPROVED COURSE OUTLINE:
 {}
 
-Based on this outline, create a comprehensive student reference guide that must include:
+REQUIRED CONTENT:
+Create a comprehensive student reference guide that includes:
 1. Executive summary of the course
 2. Key concepts and definitions for each section
 3. Practical tips and best practices
@@ -259,7 +277,17 @@ Based on this outline, create a comprehensive student reference guide that must 
 7. Glossary of important terms
 8. Note-taking sections
 
-Format your response as a complete student guide with clear sections, headings, and space for notes.""".format(self.approved_outline),
+Please provide your response in this exact format:
+
+Thought: I will create a comprehensive student handout based on the approved outline.
+Final Answer: 
+
+# Student Handout
+
+## Course Summary
+[Executive summary]
+
+[Continue with remaining sections]""".format(self.approved_outline),
                 expected_output="A concise student handout in Markdown format",
                 agent=self.materials_creator()
             )
