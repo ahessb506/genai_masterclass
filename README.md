@@ -1,54 +1,27 @@
-# GenaiMasterclass Crew
+# GenAI Masterclass Generator
 
-Welcome to the GenaiMasterclass Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+A Python-based project that leverages AI agents to automatically generate comprehensive learning materials for a one-day Generative AI masterclass targeted at non-technical professionals.
 
-## Installation
+## Overview
 
-Ensure you have Python >=3.10 <=3.13 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+This project uses the CrewAI framework to orchestrate multiple AI agents working together to create a complete masterclass curriculum. Each agent has a specialized role in developing different aspects of the course materials:
 
-First, if you haven't already, install uv:
+- Content Developer: Designs comprehensive learning materials and course structure
+- Materials Creator: Develops slides, handouts, and supporting documentation
+- Feedback Agent: Reviews and refines materials for clarity and effectiveness
 
-```bash
-pip install uv
-```
+## Features
 
-Next, navigate to your project directory and install the dependencies:
+- Automated generation of:
+  - Detailed course outlines
+  - Professor teaching guides
+  - Presentation slides
+  - Student handouts
+  - Quality assurance reviews
 
-(Optional) Lock the dependencies and install them by using the CLI command:
-```bash
-crewai install
-```
-### Customizing
+- Focus on practical GenAI concepts including:
+  - AI fundamentals for beginners
+  - Popular GenAI tools and applications
+  - Prompt engineering techniques
+  - Hands-on exercises and activities
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
-
-- Modify `src/genai_masterclass/config/agents.yaml` to define your agents
-- Modify `src/genai_masterclass/config/tasks.yaml` to define your tasks
-- Modify `src/genai_masterclass/crew.py` to add your own logic, tools and specific args
-- Modify `src/genai_masterclass/main.py` to add custom inputs for your agents and tasks
-
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
-
-```bash
-$ crewai run
-```
-
-This command initializes the genai_masterclass Crew, assembling the agents and assigning them tasks as defined in your configuration.
-
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
-
-## Understanding Your Crew
-
-The genai_masterclass Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
-
-## Support
-
-For support, questions, or feedback regarding the GenaiMasterclass Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
-
-Let's create wonders together with the power and simplicity of crewAI.
