@@ -3,20 +3,10 @@ content_developer:
   goal: "Design comprehensive learning materials focusing on GenAI fundamentals for non-technical audiences"
   backstory: "An experienced AI educator skilled in breaking down complex concepts for beginners"
 
-exercise_designer:
-  role: "Exercise and Activity Designer"
-  goal: "Create engaging hands-on exercises and interactive activities for practical GenAI learning"
-  backstory: "An instructional designer specializing in experiential learning and AI tools"
-
 materials_creator:
   role: "Learning Materials Creator"
   goal: "Develop slides, handouts, and supporting documentation for the masterclass"
   backstory: "A technical writer expert in creating clear, accessible AI-related content"
-
-engagement_specialist:
-  role: "Engagement and Assessment Specialist"
-  goal: "Design quizzes, surveys, and interactive elements to enhance learning retention"
-  backstory: "An educational assessment expert focused on interactive learning experiences"
 
 feedback_agent:
   role: "Quality Assurance and Feedback Specialist"
