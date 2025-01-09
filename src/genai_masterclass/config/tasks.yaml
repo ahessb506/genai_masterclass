@@ -117,11 +117,15 @@ AI Feedback: {ai_feedback}"
   agent: content_developer
 
 revise_outline_with_human_feedback:
-  description: "Revise the outline based on this human feedback:
-
-{feedback}
-
-Make sure to address all the points raised in the feedback."
-  expected_output: "Revised course outline in Markdown format"
+  description: "Review and improve this outline: {initial_outline}\n\nHuman feedback: {feedback}\n\nPlease incorporate this feedback thoughtfully and provide a revised version in {language}. Explain your changes briefly at the end."
+  expected_output: "A revised outline incorporating the human feedback, with a brief explanation of the changes made."
   agent: content_developer
   context: [create_initial_outline]
+
+revise_with_specialist_feedback:
+  description: "Review and improve this outline: {initial_outline}\n\nSpecialist feedback: {feedback}\n\nPlease incorporate the specialist's feedback thoughtfully and provide a revised version in {language}."
+  expected_output: "A revised outline incorporating the specialist feedback"
+
+revise_with_human_feedback:
+  description: "Review and improve this outline: {current_outline}\n\nHuman feedback: {feedback}\n\nPlease incorporate this feedback thoughtfully and provide a revised version in {language}."
+  expected_output: "A revised outline incorporating the human feedback"

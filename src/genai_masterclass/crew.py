@@ -68,7 +68,7 @@ class MasterclassCrew:
 
     def get_crew(self) -> Crew:
         try:
-            # Step 1: Create Initial Outline
+            # Step 1: Content Developer Creates Initial Outline
             print("\nCreating initial outline...")
             initial_outline_task = Task(
                 description=self.tasks['create_initial_outline']['description'].format(
@@ -91,8 +91,8 @@ class MasterclassCrew:
             self._save_output('initial_outline.md', initial_outline)
             print("✓ Initial outline created")
 
-            # Step 2: Review Initial Outline
-            print("\nReviewing initial outline...")
+            # Step 2: Feedback Agent Reviews
+            print("\nGetting feedback from specialist...")
             review_task = Task(
                 description=self.tasks['review_initial_outline']['description'].format(
                     initial_outline=initial_outline
@@ -113,7 +113,7 @@ class MasterclassCrew:
             self._save_output('outline_review.md', outline_review)
             print("✓ Outline review completed")
 
-            # Human Approval Step
+            # Human Approval Loop
             print("\nPlease review the initial outline and feedback:")
             print("\n=== Initial Outline ===")
             print(initial_outline)
@@ -121,18 +121,20 @@ class MasterclassCrew:
             print(outline_review)
             
             while True:
-                approval = input("\nDo you approve this outline? (yes/no): ").lower()
-                if approval == 'yes':
+                feedback = input("\nPlease provide your feedback (or type 'approve' to continue): ").strip()
+                
+                if feedback.lower() == 'approve':
                     print("\nOutline approved! Proceeding with final version...")
                     break
-                elif approval == 'no':
-                    feedback = input("\nPlease provide your feedback: ")
-                    print("\nIncorporating human feedback...")
+                else:
+                    print("\nIncorporating your feedback...")
                     
                     # Create task to revise outline with human feedback
                     revision_task = Task(
                         description=self.tasks['revise_outline_with_human_feedback']['description'].format(
-                            feedback=feedback
+                            initial_outline=initial_outline,
+                            feedback=feedback,
+                            language=self.masterclass_concept['concept']['language']
                         ),
                         expected_output=self.tasks['revise_outline_with_human_feedback']['expected_output'],
                         agent=self.content_developer()
@@ -148,13 +150,11 @@ class MasterclassCrew:
                     revision_result = revision_crew.kickoff()
                     initial_outline = self._get_result_content(revision_result)
                     self._save_output('revised_outline.md', initial_outline)
-                    print("✓ Outline revised with human feedback")
+                    print("\n✓ Outline revised with your feedback")
                     
-                    # Show revised outline for approval
+                    # Show revised outline for next iteration
                     print("\n=== Revised Outline ===")
                     print(initial_outline)
-                else:
-                    print("Please enter 'yes' or 'no'")
 
             # Step 3: Create Final Outline (after approval)
             print("\nCreating final outline...")
