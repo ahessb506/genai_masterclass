@@ -5,9 +5,8 @@ import warnings
 from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, task
 
-# Suppress the TracerProvider warning globally
-warnings.filterwarnings("ignore", category=RuntimeWarning, 
-                      message="Overriding of current TracerProvider is not allowed")
+# Disable OpenTelemetry tracing
+os.environ["OTEL_PYTHON_DISABLED"] = "true"
 
 @CrewBase
 class MasterclassCrew:
@@ -116,6 +115,22 @@ class MasterclassCrew:
             print(f"Error accessing task {task_index} output: {e}")
             return str(result)
 
+    def _get_result_content(self, result):
+        """Safely extract content from CrewOutput."""
+        try:
+            # Try different methods to get the content
+            if hasattr(result, 'raw_output'):
+                return result.raw_output
+            elif hasattr(result, 'outputs'):
+                return result.outputs[0] if result.outputs else str(result)
+            elif isinstance(result, (list, tuple)):
+                return result[0]
+            else:
+                return str(result)
+        except Exception as e:
+            print(f"Warning: Error extracting content: {e}")
+            return str(result)
+
     def get_crew(self) -> Crew:
         """Create and return the crew with iterative outline review."""
         # Step 1: Create initial outline and get AI review
@@ -200,16 +215,19 @@ class MasterclassCrew:
         print("\nOutline approved. Creating final materials...")
         self.approved_outline = current_outline
         
-        # Create final materials with agent-specific format instructions
-        final_tasks = [
-            Task(
-                description="""Create a comprehensive professor's guide for this masterclass.
+        # Create and execute tasks sequentially with better error handling
+        results = {}
+        
+        try:
+            # Professor's Guide
+            print("\nGenerating professor's guide...")
+            guide_task = Task(
+                description=f"""You are creating a comprehensive professor's guide.
 
 APPROVED COURSE OUTLINE:
-{}
+{self.approved_outline}
 
-REQUIRED CONTENT:
-Create a detailed teaching guide document that includes:
+Your task is to create a detailed teaching guide document. You must include:
 1. Detailed explanations for each section of the course
 2. Step-by-step teaching instructions with timing
 3. Specific activities and exercises with implementation guidelines
@@ -218,25 +236,33 @@ Create a detailed teaching guide document that includes:
 6. Additional resources and references for each topic
 7. Assessment criteria and grading guidelines
 
-Please provide your response in this exact format:
-
 Thought: I will create a comprehensive professor's guide based on the approved outline.
-Final Answer: 
-
-# Professor's Guide for [Course Title]
-
-[Rest of the guide content following the requirements above]""".format(self.approved_outline),
+Final Answer: [Your complete professor's guide in markdown format]""",
                 expected_output="A comprehensive professor's guide in Markdown format",
                 agent=self.content_developer()
-            ),
-            Task(
-                description="""Create presentation slides for this masterclass.
+            )
+            
+            guide_crew = Crew(
+                agents=[self.content_developer()],
+                tasks=[guide_task],
+                process=Process.sequential,
+                verbose=True
+            )
+            
+            guide_result = guide_crew.kickoff()
+            guide_content = self._get_result_content(guide_result)
+            self._save_output('professor_guide.md', guide_content)
+            print("✓ Professor's guide created")
+
+            # Presentation Slides
+            print("\nGenerating presentation slides...")
+            slides_task = Task(
+                description=f"""You are creating presentation slides.
 
 APPROVED COURSE OUTLINE:
-{}
+{self.approved_outline}
 
-REQUIRED CONTENT:
-Create a complete slide deck content that includes:
+Your task is to create a complete slide deck. You must include:
 1. Title slide and introduction
 2. Clear slides for each section of the outline
 3. Key points and concepts for each topic
@@ -245,29 +271,38 @@ Create a complete slide deck content that includes:
 6. Visual element descriptions
 7. Speaker notes for each slide
 
-Please provide your response in this exact format:
+Format each slide as:
+## Slide [number]: [title]
+Content: [content]
+Speaker Notes: [notes]
 
-Thought: I will create a complete slide deck based on the approved outline.
-Final Answer: 
-
-# Presentation Slides
-
-## Slide 1: Title
-Content: [Slide content]
-Speaker Notes: [Notes for presenter]
-
-[Continue with remaining slides]""".format(self.approved_outline),
+Thought: I will create presentation slides based on the approved outline.
+Final Answer: [Your complete slide deck in markdown format]""",
                 expected_output="Slide-by-slide content in Markdown format",
                 agent=self.materials_creator()
-            ),
-            Task(
-                description="""Create a student handout for this masterclass.
+            )
+            
+            slides_crew = Crew(
+                agents=[self.materials_creator()],
+                tasks=[slides_task],
+                process=Process.sequential,
+                verbose=True
+            )
+            
+            slides_result = slides_crew.kickoff()
+            slides_content = self._get_result_content(slides_result)
+            self._save_output('presentation_slides.md', slides_content)
+            print("✓ Presentation slides created")
+
+            # Student Handout
+            print("\nGenerating student handout...")
+            handout_task = Task(
+                description=f"""You are creating a student handout.
 
 APPROVED COURSE OUTLINE:
-{}
+{self.approved_outline}
 
-REQUIRED CONTENT:
-Create a comprehensive student reference guide that includes:
+Your task is to create a student-friendly reference guide. You must include:
 1. Executive summary of the course
 2. Key concepts and definitions for each section
 3. Practical tips and best practices
@@ -277,50 +312,42 @@ Create a comprehensive student reference guide that includes:
 7. Glossary of important terms
 8. Note-taking sections
 
-Please provide your response in this exact format:
-
-Thought: I will create a comprehensive student handout based on the approved outline.
-Final Answer: 
-
-# Student Handout
-
-## Course Summary
-[Executive summary]
-
-[Continue with remaining sections]""".format(self.approved_outline),
+Thought: I will create a student handout based on the approved outline.
+Final Answer: [Your complete student handout in markdown format]""",
                 expected_output="A concise student handout in Markdown format",
                 agent=self.materials_creator()
             )
-        ]
+            
+            handout_crew = Crew(
+                agents=[self.materials_creator()],
+                tasks=[handout_task],
+                process=Process.sequential,
+                verbose=True
+            )
+            
+            handout_result = handout_crew.kickoff()
+            handout_content = self._get_result_content(handout_result)
+            self._save_output('student_handout.md', handout_content)
+            print("✓ Student handout created")
 
-        final_crew = Crew(
-            agents=[
-                self.content_developer(),
-                self.materials_creator()
-            ],
-            tasks=final_tasks,
-            process=Process.sequential,
-            verbose=True
-        )
+            # Verify unique content
+            print("\nVerifying unique content in files...")
+            files = {
+                'professor_guide.md': guide_content,
+                'presentation_slides.md': slides_content,
+                'student_handout.md': handout_content
+            }
 
-        # Execute final tasks and save outputs
-        print("\nExecuting final tasks...")
-        final_results = final_crew.kickoff()
-        
-        print("\nSaving final outputs...")
-        output_files = [
-            ('professor_guide.md', 0),
-            ('presentation_slides.md', 1),
-            ('student_handout.md', 2)
-        ]
-        
-        for filename, index in output_files:
-            print(f"\nProcessing {filename}...")
-            content = self._get_task_output(final_results, index)
-            if content:
-                print(f"Content extracted for {filename}, saving...")
-                self._save_output(filename, content)
-            else:
-                print(f"No content extracted for {filename}")
+            for file1, content1 in files.items():
+                for file2, content2 in files.items():
+                    if file1 < file2:
+                        if content1 == content2:
+                            print(f"Warning: {file1} and {file2} have identical content!")
+                        else:
+                            print(f"✓ {file1} and {file2} have unique content")
 
-        return final_crew
+        except Exception as e:
+            print(f"\nError during content generation: {str(e)}")
+            raise
+
+        return guide_crew  # Return the first crew for compatibility
