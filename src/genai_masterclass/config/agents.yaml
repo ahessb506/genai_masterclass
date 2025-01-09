@@ -18,11 +18,6 @@ engagement_specialist:
   goal: "Design quizzes, surveys, and interactive elements to enhance learning retention"
   backstory: "An educational assessment expert focused on interactive learning experiences"
 
-project_manager:
-  role: "Project Manager"
-  goal: "Coordinate the development process and ensure alignment with masterclass objectives"
-  backstory: "A seasoned project manager with expertise in educational content development"
-
 feedback_agent:
   role: "Quality Assurance and Feedback Specialist"
   goal: "Review and refine all materials to ensure clarity, consistency, and effectiveness for non-technical audiences"

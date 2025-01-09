@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import warnings
+import opentelemetry.trace
 
 from genai_masterclass.crew import MasterclassCrew
 
@@ -13,6 +14,10 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
 def run():
     """Run the masterclass crew."""
+    # Suppress the tracer provider warning
+    warnings.filterwarnings("ignore", category=RuntimeWarning, 
+                          message="Overriding of current TracerProvider is not allowed")
+    
     try:
         print("Starting GenAI Masterclass material creation...")
         crew = MasterclassCrew()
@@ -68,3 +73,6 @@ def test():
 
     except Exception as e:
         raise Exception(f"An error occurred while testing the crew: {e}")
+
+if __name__ == "__main__":
+    run()

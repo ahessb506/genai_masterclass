@@ -78,8 +78,9 @@ class MasterclassCrew:
         initial_results = initial_crew.kickoff()
         
         try:
-            initial_outline = initial_results.get_task_output(self.create_initial_outline())
-            ai_feedback = initial_results.get_task_output(self.review_initial_outline())
+            # Access results directly from the list
+            initial_outline = initial_results[0]
+            ai_feedback = initial_results[1]
             
             print("\nInitial AI Feedback received. Incorporating feedback...")
             
@@ -98,7 +99,7 @@ class MasterclassCrew:
             )
             
             revision_result = revision_crew.kickoff()
-            current_outline = revision_result.get_task_output(revision_crew.tasks[0])
+            current_outline = revision_result[0]
             
         except Exception as e:
             print(f"Note: Error accessing results: {e}")
@@ -125,7 +126,7 @@ class MasterclassCrew:
             
             revision_result = revision_crew.kickoff()
             try:
-                current_outline = revision_result.get_task_output(revision_crew.tasks[0])
+                current_outline = revision_result[0]
             except Exception as e:
                 print(f"Note: Error accessing revision result: {e}")
                 current_outline = str(revision_result)
@@ -135,12 +136,75 @@ class MasterclassCrew:
         # Store the approved outline for use in final materials
         self.approved_outline = current_outline
         
-        # Create final materials once outline is approved
+        # Create final materials with specific instructions
         final_tasks = [
-            self.create_professor_guide(),
-            self.create_presentation_slides(),
-            self.create_student_handout(),
-            self.review_all_materials()
+            Task(
+                description=f"""Create a comprehensive professor's guide based on this approved outline:
+
+{self.approved_outline}
+
+Your task is to create a detailed teaching guide that includes:
+1. Detailed explanations for each section of the course
+2. Step-by-step teaching instructions with timing
+3. Specific activities and exercises with implementation guidelines
+4. Anticipated student questions and prepared answers
+5. Tips for maintaining engagement and handling discussions
+6. Additional resources and references for each topic
+7. Assessment criteria and grading guidelines""",
+                expected_output="A comprehensive professor's guide in Markdown format",
+                agent=self.content_developer()
+            ),
+            Task(
+                description=f"""Create presentation slides based on this approved outline:
+
+{self.approved_outline}
+
+Your task is to create engaging presentation content that:
+1. Follows the outline's progression logically
+2. Uses clear, non-technical language appropriate for the audience
+3. Includes specific points for visual elements and graphics
+4. Highlights key concepts with examples and analogies
+5. Incorporates interactive elements and discussion points
+6. Provides clear transitions between topics
+7. Includes speaker notes with delivery suggestions""",
+                expected_output="Slide-by-slide content in Markdown format",
+                agent=self.materials_creator()
+            ),
+            Task(
+                description=f"""Create a student handout based on this approved outline:
+
+{self.approved_outline}
+
+Your task is to create a concise reference guide that:
+1. Summarizes key concepts and definitions
+2. Provides practical tips and best practices
+3. Lists common pitfalls and how to avoid them
+4. Includes hands-on exercises and practice problems
+5. Offers resources for further learning
+6. Contains a glossary of important terms
+7. Includes space for notes and reflections""",
+                expected_output="A concise student handout in Markdown format",
+                agent=self.materials_creator()
+            ),
+            Task(
+                description=f"""Review all the created materials in the context of this approved outline:
+
+{self.approved_outline}
+
+Your task is to perform a comprehensive review ensuring:
+1. Perfect alignment with the approved outline
+2. Consistency in terminology and concepts across all materials
+3. Appropriate difficulty level for the target audience
+4. Logical progression of concepts and learning objectives
+5. Effectiveness of exercises and activities
+6. Clarity and completeness of explanations
+7. Proper coverage of all topics
+8. Engagement level of materials
+
+Provide specific feedback for improvements if needed.""",
+                expected_output="Detailed review report with specific recommendations",
+                agent=self.feedback_agent()
+            )
         ]
 
         return Crew(
@@ -152,36 +216,4 @@ class MasterclassCrew:
             tasks=final_tasks,
             process=Process.sequential,
             verbose=True
-        )
-
-    @task
-    def create_professor_guide(self) -> Task:
-        return Task(
-            description=f"Based on this approved outline:\n\n{self.approved_outline}\n\nCreate a comprehensive teaching guide that includes:\n- Detailed explanations for each section\n- Teaching instructions and timing\n- Activities and guidelines\n- Common questions and answers\n- Tips for engagement",
-            expected_output="A comprehensive professor's guide in Markdown format",
-            agent=self.content_developer()
-        )
-
-    @task
-    def create_presentation_slides(self) -> Task:
-        return Task(
-            description=f"Based on this approved outline:\n\n{self.approved_outline}\n\nCreate presentation slides that:\n- Follow the established progression\n- Use concise, non-technical language\n- Include visual elements and interaction points\n- Highlight key concepts and examples",
-            expected_output="Slide-by-slide content in Markdown format",
-            agent=self.materials_creator()
-        )
-
-    @task
-    def create_student_handout(self) -> Task:
-        return Task(
-            description=f"Based on this approved outline:\n\n{self.approved_outline}\n\nCreate a concise reference guide that includes:\n- Key concepts and definitions\n- Practical tips and best practices\n- Common pitfalls to avoid\n- Resources for further learning",
-            expected_output="A concise summary document in Markdown format",
-            agent=self.materials_creator()
-        )
-
-    @task
-    def review_all_materials(self) -> Task:
-        return Task(
-            description=f"Based on this approved outline:\n\n{self.approved_outline}\n\nReview all materials to ensure:\n- Alignment with the approved outline\n- Consistency across all documents\n- Appropriate level for the target audience\n- Effective progression of concepts",
-            expected_output="Review report with suggested improvements",
-            agent=self.feedback_agent()
         )
