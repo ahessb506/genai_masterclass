@@ -1,75 +1,84 @@
-design_lesson_plan:
-  description: "Design and structure the masterclass lesson plan for a 3 hour session, including key talking points."
-  expected_output: "A comprehensive professors guideline in Markdown format."
-  output_file: "outputs/lesson_plan.md"
+create_initial_outline:
+  description: "Based on this masterclass concept: {masterclass_concept}
+
+    Create a detailed course outline that includes:
+    - Clear learning objectives for each section
+    - Detailed breakdown of topics and subtopics
+    - Suggested time allocation for each section
+    - Key points to be covered
+    - Proposed activities and exercises
+    - Assessment methods"
+  expected_output: "A detailed course outline in Markdown format"
   agent: content_developer
 
-create_slide_content:
-  description: "Develop structured content for each slide of the masterclass in Markdown format."
-  expected_output: "Markdown files representing the content for each slide."
-  output_file: "outputs/slides/slide_content.md"
-  agent: content_developer
+review_initial_outline:
+  description: "Review this initial course outline: {initial_outline}
 
-draft_reminder_document:
-  description: "Draft a concise 2-3 page document summarizing key tools and techniques taught in the masterclass."
-  expected_output: "A well-written summary document in Markdown format."
-  output_file: "outputs/summary_document.md"
-  agent: materials_creator
-
-develop_quizzes_activities:
-  description: "Develop interactive quizzes and practical exercises to reinforce learning and engagement."
-  expected_output: "Markdown documents containing quizzes and activities tailored to the masterclass content."
-  output_file: "outputs/activities/quizzes_and_activities.md"
-  agent: exercise_designer
-
-review_materials:
-  description: "Review all materials to ensure clarity, consistency, and alignment with masterclass objectives."
-  expected_output: "Feedback and revisions incorporated into the Markdown documents."
-  output_file: "outputs/review/feedback_report.md"
+    Provide detailed feedback on:
+    - Alignment with masterclass objectives
+    - Content progression and flow
+    - Time allocation appropriateness
+    - Coverage of key topics
+    - Suggested improvements or additions
+    - Potential gaps or areas of concern"
+  expected_output: "Detailed review and suggestions in Markdown format"
   agent: feedback_agent
 
-coordinate_project:
-  description: "Oversee the project, manage timelines, and ensure seamless collaboration among all agents."
-  expected_output: "A well-coordinated project with all deliverables completed on time."
-  output_file: "outputs/project/project_status.md"
-  agent: project_manager
+create_final_outline:
+  description: "Based on the initial outline: {initial_outline}
+    And considering this feedback: {outline_review}
 
-develop_course_outline:
-  description: "Create detailed course outline with timing for each section based on the provided agenda"
-  expected_output: "Comprehensive course outline in Markdown format with detailed timings"
-  output_file: "outputs/course_outline.md"
+    Create the final course outline incorporating the feedback and suggestions.
+    Ensure all adjustments maintain alignment with the original masterclass concept: {masterclass_concept}"
+  expected_output: "Final course outline in Markdown format"
+  output_file: "outputs/final_outline.md"
   agent: content_developer
 
-create_fundamental_content:
-  description: "Develop content for AI fundamentals, LLMs, and prompt engineering sections"
-  expected_output: "Markdown files containing slide content and speaker notes"
-  output_file: "outputs/content/fundamentals.md"
+create_professor_guide:
+  description: "Based on the approved course outline: {final_outline}
+
+    Create a comprehensive teaching guide that includes:
+    - Detailed explanations for each section
+    - Teaching instructions and timing
+    - Activities and guidelines
+    - Common questions and answers
+    - Tips for engagement"
+  expected_output: "A comprehensive professor's guide in Markdown format"
+  output_file: "outputs/professor_guide.md"
   agent: content_developer
 
-design_practical_exercises:
-  description: "Create hands-on exercises for prompt engineering and AI tool usage"
-  expected_output: "Step-by-step exercise guides with example prompts and expected outputs"
-  output_file: "outputs/exercises/practical_exercises.md"
-  agent: exercise_designer
+create_presentation_slides:
+  description: "Based on the approved course outline: {final_outline}
 
-develop_interactive_activities:
-  description: "Design group activities including icebreakers and AI recognition exercises"
-  expected_output: "Activity instructions and facilitation guides in Markdown format"
-  output_file: "outputs/activities/interactive_activities.md"
-  agent: exercise_designer
-
-create_supporting_materials:
-  description: "Develop content that is designed to be used on powerpoint slides by the teacher"
-  expected_output: "Content to be used in presentation slides in Markdown format"
-  output_file: "outputs/materials/presentation_content.md"
+    Create presentation slides that:
+    - Follow the established progression of topics
+    - Use concise, non-technical language
+    - Include visual elements and interaction points
+    - Highlight key concepts and examples"
+  expected_output: "Slide-by-slide content in Markdown format"
+  output_file: "outputs/slides/presentation_content.md"
   agent: materials_creator
 
-design_assessment_tools:
-  description: "Create pre/post quizzes and feedback surveys"
-  expected_output: "Quiz questions, answer keys, and feedback forms in Markdown format"
-  agent: engagement_specialist
+create_student_handout:
+  description: "Based on the approved course outline: {final_outline}
 
-manage_project_delivery:
-  description: "Coordinate development timeline"
-  expected_output: "Ensure all deliverables are completed and content is set for the masterclass"
-  agent: project_manager
+    Create a concise reference guide (2-3 pages) that includes:
+    - Key concepts and definitions
+    - Practical tips and best practices
+    - Common pitfalls to avoid
+    - Resources for further learning"
+  expected_output: "A concise summary document in Markdown format"
+  output_file: "outputs/student_handout.md"
+  agent: materials_creator
+
+review_all_materials:
+  description: "Based on the approved course outline: {final_outline}
+
+    Review all materials to ensure:
+    - Alignment with the approved outline
+    - Consistency across all documents
+    - Appropriate level for the target audience
+    - Effective progression of concepts"
+  expected_output: "Review report with suggested improvements"
+  output_file: "outputs/review/review_report.md"
+  agent: feedback_agent
