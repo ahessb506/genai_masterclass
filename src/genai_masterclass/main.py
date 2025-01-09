@@ -12,16 +12,19 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 # interpolate any tasks and agents information
 
 def run():
-    """
-    Run the crew to develop the GenAI masterclass.
-    """
-    inputs = {
-        'topic': 'Generative AI for Beginners',
-        'audience': 'Non-technical professionals',
-        'duration': 'One-day masterclass',
-        'focus': 'Practical AI tools and productivity enhancement'
-    }
-    MasterclassCrew().crew().kickoff(inputs=inputs)
+    """Run the masterclass crew."""
+    try:
+        print("Starting GenAI Masterclass material creation...")
+        crew = MasterclassCrew()
+        result = crew.get_crew().kickoff()
+        print("\nMasterclass materials have been created successfully!")
+        return 0
+    except KeyboardInterrupt:
+        print("\nProcess interrupted by user.")
+        return 1
+    except Exception as e:
+        print(f"\nAn error occurred while running the crew: {str(e)}")
+        return 1
 
 
 def train():

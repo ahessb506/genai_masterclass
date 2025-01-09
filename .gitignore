@@ -1,3 +1,4 @@
 .env
 __pycache__/
 /src/genai_masterclass/outputs
+/outputs
