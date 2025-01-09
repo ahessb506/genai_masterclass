@@ -1,14 +1,6 @@
 create_initial_outline:
-  description: "Based on this masterclass concept: {masterclass_concept}
-
-    Create a detailed course outline that includes:
-    - Clear learning objectives for each section
-    - Detailed breakdown of topics and subtopics
-    - Suggested time allocation for each section
-    - Key points to be covered
-    - Proposed activities and exercises
-    - Assessment methods"
-  expected_output: "A detailed course outline in Markdown format"
+  description: "Create an initial outline for a masterclass with the following concept: {masterclass_concept}. Please provide the outline in {language}."
+  expected_output: "A detailed outline in {language} for the masterclass."
   agent: content_developer
 
 review_initial_outline:

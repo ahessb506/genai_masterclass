@@ -1,4 +1,9 @@
-concept: |
-  A comprehensive masterwaclass on Generative AI for non-technical audiences.
+concept:
+  title: "Introduction to Generative AI"
+  description: "A comprehensive masterclass on Generative AI for non-technical audiences.
   The course should cover fundamental concepts, practical applications, and ethical considerations
-  while keeping the content accessible and engaging for participants without technical background. 
+  while keeping the content accessible and engaging for participants without technical background."   
+  target_audience: "Non-technical professionals"
+  duration: "4 hours"
+  language: "spanish"
+  # ... rest of your concept configuration 

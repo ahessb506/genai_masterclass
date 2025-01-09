@@ -27,6 +27,9 @@ class MasterclassCrew:
         config_path = self.base_path / self.masterclass_config
         with open(config_path, 'r') as f:
             self.masterclass_concept = yaml.safe_load(f)
+            # Set default language if not specified
+            if 'language' not in self.masterclass_concept['concept']:
+                self.masterclass_concept['concept']['language'] = 'spanish'
 
     def _load_tasks_config(self):
         config_path = self.base_path / self.tasks_config
@@ -69,7 +72,8 @@ class MasterclassCrew:
             print("\nCreating initial outline...")
             initial_outline_task = Task(
                 description=self.tasks['create_initial_outline']['description'].format(
-                    masterclass_concept=self.masterclass_concept['concept']  # Make sure to access the correct key
+                    masterclass_concept=self.masterclass_concept['concept'],
+                    language=self.masterclass_concept['concept']['language']
                 ),
                 expected_output=self.tasks['create_initial_outline']['expected_output'],
                 agent=self.content_developer()
