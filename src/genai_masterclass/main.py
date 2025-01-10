@@ -28,7 +28,12 @@ def run():
             print("Starting GenAI Masterclass creation process...")
             
             crew = MasterclassCrew()
-            print(f"Output directory: {crew.output_path}")
+            # Simplify the debug output to just show what we know exists
+            print(f"\nLLM Configuration:")
+            print(f"Model: {crew.llm.model if hasattr(crew.llm, 'model') else 'Not set'}")
+            print(f"Provider: {crew.llm.provider if hasattr(crew.llm, 'provider') else 'Not set'}")
+            
+            print(f"\nOutput directory: {crew.output_path}")
             
             result = crew.get_crew().kickoff()
             

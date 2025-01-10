@@ -2,7 +2,9 @@ from pathlib import Path
 import yaml
 import os
 import warnings
-from crewai import Agent, Task, Crew, Process
+from crewai import Agent, Task, Crew, Process, LLM
+from dotenv import load_dotenv
+import litellm
 
 class MasterclassCrew:
     """Crew for developing a GenAI masterclass for non-technical audiences"""
@@ -22,6 +24,20 @@ class MasterclassCrew:
         self._load_masterclass_concept()
         self._load_tasks_config()
         self._load_agents_config()
+        
+        # Load environment variables
+        load_dotenv()
+        
+        # Enable debug mode
+        litellm.set_verbose = True
+        
+        # Simplify LLM configuration - remove extra parameters
+        self.llm = LLM(
+            model="claude-3-sonnet-20240229"  # Only specify the model
+        )
+        
+        # Load YAML configurations
+        self.config_path = Path(__file__).parent / "config"
 
     def _load_masterclass_concept(self):
         config_path = self.base_path / self.masterclass_config
@@ -66,153 +82,53 @@ class MasterclassCrew:
             verbose=True
         )
 
-    def get_crew(self) -> Crew:
-        try:
-            # Step 1: Content Developer Creates Initial Outline
-            print("\nCreating initial outline...")
-            initial_outline_task = Task(
-                description=self.tasks['create_initial_outline']['description'].format(
-                    masterclass_concept=self.masterclass_concept['concept'],
-                    language=self.masterclass_concept['concept']['language']
-                ),
-                expected_output=self.tasks['create_initial_outline']['expected_output'],
-                agent=self.content_developer()
-            )
+    def get_agents(self):
+        """Create agents from YAML configuration"""
+        with open(self.config_path / "agents.yaml", "r") as f:
+            agents_config = yaml.safe_load(f)
             
-            initial_crew = Crew(
-                agents=[self.content_developer()],
-                tasks=[initial_outline_task],
-                process=Process.sequential,
-                verbose=True
-            )
+        if isinstance(agents_config, dict):
+            agents_list = agents_config.values()
+        else:
+            agents_list = agents_config
             
-            initial_result = initial_crew.kickoff()
-            initial_outline = self._get_result_content(initial_result)
-            self._save_output('initial_outline.md', initial_outline)
-            print("✓ Initial outline created")
+        return [
+            Agent(
+                role=agent_config['role'],
+                goal=agent_config['goal'],
+                backstory=agent_config['backstory'],
+                llm=self.llm
+            )
+            for agent_config in agents_list
+        ]
 
-            # Step 2: Feedback Agent Reviews
-            print("\nGetting feedback from specialist...")
-            review_task = Task(
-                description=self.tasks['review_initial_outline']['description'].format(
-                    initial_outline=initial_outline
-                ),
-                expected_output=self.tasks['review_initial_outline']['expected_output'],
-                agent=self.feedback_agent()
-            )
+    def get_tasks(self):
+        """Create tasks from YAML configuration"""
+        with open(self.config_path / "tasks.yaml", "r") as f:
+            tasks_config = yaml.safe_load(f)
             
-            review_crew = Crew(
-                agents=[self.feedback_agent()],
-                tasks=[review_task],
-                process=Process.sequential,
-                verbose=True
-            )
+        if isinstance(tasks_config, dict):
+            tasks_list = tasks_config.values()
+        else:
+            tasks_list = tasks_config
             
-            review_result = review_crew.kickoff()
-            outline_review = self._get_result_content(review_result)
-            self._save_output('outline_review.md', outline_review)
-            print("✓ Outline review completed")
+        agents = self.get_agents()
+        return [
+            Task(
+                description=task_config['description'],
+                expected_output=task_config['expected_output'],
+                agent=agents[0]
+            )
+            for task_config in tasks_list
+        ]
 
-            # Human Approval Loop
-            print("\nPlease review the initial outline and feedback:")
-            print("\n=== Initial Outline ===")
-            print(initial_outline)
-            print("\n=== Review Feedback ===")
-            print(outline_review)
-            
-            while True:
-                feedback = input("\nPlease provide your feedback (or type 'approve' to continue): ").strip()
-                
-                if feedback.lower() == 'approve':
-                    print("\nOutline approved! Proceeding with final version...")
-                    break
-                else:
-                    print("\nIncorporating your feedback...")
-                    
-                    # Create task to revise outline with human feedback
-                    revision_task = Task(
-                        description=self.tasks['revise_outline_with_human_feedback']['description'].format(
-                            initial_outline=initial_outline,
-                            feedback=feedback,
-                            language=self.masterclass_concept['concept']['language']
-                        ),
-                        expected_output=self.tasks['revise_outline_with_human_feedback']['expected_output'],
-                        agent=self.content_developer()
-                    )
-                    
-                    revision_crew = Crew(
-                        agents=[self.content_developer()],
-                        tasks=[revision_task],
-                        process=Process.sequential,
-                        verbose=True
-                    )
-                    
-                    revision_result = revision_crew.kickoff()
-                    initial_outline = self._get_result_content(revision_result)
-                    self._save_output('revised_outline.md', initial_outline)
-                    print("\n✓ Outline revised with your feedback")
-                    
-                    # Show revised outline for next iteration
-                    print("\n=== Revised Outline ===")
-                    print(initial_outline)
-
-            # Step 3: Create Final Outline (after approval)
-            print("\nCreating final outline...")
-            final_outline_task = Task(
-                description=self.tasks['create_final_outline']['description'].format(
-                    initial_outline=initial_outline,
-                    outline_review=outline_review,
-                    masterclass_concept=self.masterclass_concept['concept']
-                ),
-                expected_output=self.tasks['create_final_outline']['expected_output'],
-                agent=self.content_developer()
-            )
-            
-            final_crew = Crew(
-                agents=[self.content_developer()],
-                tasks=[final_outline_task],
-                process=Process.sequential,
-                verbose=True
-            )
-            
-            final_result = final_crew.kickoff()
-            self.approved_outline = self._get_result_content(final_result)
-            self._save_output('final_outline.md', self.approved_outline)
-            print("✓ Final outline created and approved")
-
-            # Now that we have the approved outline, create the professor's guide
-            print("\nGenerating professor's guide...")
-            if not hasattr(self, 'approved_outline'):
-                raise ValueError("No approved outline available. Please ensure the outline is created first.")
-                
-            guide_task = Task(
-                description=self.tasks['create_professor_guide']['description'].format(
-                    approved_outline=self.approved_outline
-                ),
-                expected_output=self.tasks['create_professor_guide']['expected_output'],
-                agent=self.content_developer()
-            )
-            
-            guide_crew = Crew(
-                agents=[self.content_developer()],
-                tasks=[guide_task],
-                process=Process.sequential,
-                verbose=True
-            )
-            
-            guide_result = guide_crew.kickoff()
-            guide_content = self._get_result_content(guide_result)
-            self._save_output('professor_guide.md', guide_content)
-            print("✓ Professor's guide created")
-
-            return guide_crew
-
-        except Exception as e:
-            print(f"\nError during task execution: {str(e)}")
-            print(f"Tasks loaded: {list(self.tasks.keys())}")
-            import traceback
-            print(f"Traceback:\n{traceback.format_exc()}")
-            raise
+    def get_crew(self):
+        """Create and return the crew"""
+        return Crew(
+            agents=self.get_agents(),
+            tasks=self.get_tasks(),
+            llm=self.llm
+        )
 
     def _get_result_content(self, result):
         """Helper method to extract content from crew results"""
